@@ -6,10 +6,10 @@ const jwt = require("jsonwebtoken");
 
 router.post("/register", async (req, res) => {
   const response = validateUser(req.body);
-  if (response.error) return res.status(400).send(response.error.details);
+  if (response.error) return res.status(200).send({ errMsg: response.error.details[0]["message"] });
 
   const emailExist = await User.findOne({ email: req.body.email });
-  if (emailExist) return res.status(400).send("Email already exists");
+  if (emailExist) return res.status(200).send({ errMsg: "Email already exists" });
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(req.body.password, salt);
@@ -24,7 +24,7 @@ router.post("/register", async (req, res) => {
     const savedUser = await user
       .save()
       .then((user) => {
-        res.status(200).send({ user: user._id });
+        res.status(200).send({ user: user._id, msg: "User Registered" });
       })
       .catch((err) => {});
   } catch (e) {
@@ -34,13 +34,13 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const response = loginValidation(req.body);
-  if (response.error) return res.status(400).send(response.error.details);
+  if (response.error) return res.status(200).send({ errMsg: response.error.details[0]["message"] });
 
   const user = await User.findOne({ email: req.body.email });
-  if (!user) return res.status(400).send("Email does not exist");
+  if (!user) return res.status(200).send({ errMsg: "Email does not exist" });
 
   const validPassword = await bcrypt.compare(req.body.password, user.password);
-  if (!validPassword) return res.status(400).send("Invalid Password");
+  if (!validPassword) return res.status(200).send({ errMsg: "Invalid Password" });
 
   const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET);
 
